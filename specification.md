@@ -40,7 +40,7 @@ The internal format of both full and incremental backups is identical, it is the
 ### Archive Lines ###
 The first line of the manifest should point to the file containing all of the files listed in the manifest followed by a time stamp (RFC3339 format) for the manifest and the FQDL of system that manifest is created for eg:
 ```
-ka-dargo/2010-02-11_full.files.tar 2010-02-11T12:29:12+10:30 ka-dargo.moya.narthollis.net
+ka-dargo_2010-02-11_full.files.tar 2010-02-11T12:29:12+10:30 ka-dargo.moya.narthollis.net.
 ```
 The next line should be the sha384 of the archive file
 ```
@@ -50,13 +50,25 @@ The archive lines are terminated by a blank line
 
 ### File Lines ###
 All files in the archive are broken into blocks - to furthur reduce the size of incrimental backups.
-The first line for each file describes the file and provides the identifiers. The fields used are: UUID, which is used to identify the file in the archive; File Path, which is how we remember the file name and location; File Size in bytes, this is used in part for integrity checks and in part for any program that lists the files in the archive for indervidual retrevial; Modification Date, which is used only for human retreival reasons; Owner, used for human retreival reasons; Block Size, used to record the block size decided on for this file. Order is important and all fields are seperated by a white space character, filenames sould be surrounded in quotes.
+The first line for each file describes the file and provides the identifiers. The fields used are:
+* *UUID*: which is used to identify the file in the archive
+* *File Size*: (in bytes) this is used in part for integrity checks and in part for any program that lists the files in the archive for indervidual retrevial
+* *Block Size*: used to record the block size decided on for this file.
+* *File Path*: which is how we remember the file name and location
+
+Order is important and all fields are seperated by a white space character. File path comes last so that it may contain whitespace.
  
+Following the file information is the attribute lines, this is a key-value list of file attributes that we wish to restore. The file attribute section is closed with ```-- END ATTRIBUTES --```
+
 The next lines record the information on the indervidual blocks for that file: Block index, starting at 0; Block size, because not all blocks are going to be the full size of the block (ie the last one); sha384 hash in the format hashtype(hexdigest).
  
 The file block is be concluded with '-- END OF FILE --' and then the sha1 and md5 sum of all the manifest information for the file (excluding -- END OF FILE –)
 ```
-550e8400-e29b-41d4-a716-446655440000 'Documents/rfc/iebs.odt' 9842 2010-02-11T12:20:45+10:30 narthollis 1024
+550e8400-e29b-41d4-a716-446655440000 9842 1024 Documents/rfc/iebs.odt
+owner: narthollis
+group: users
+mask: 0755
+-- END ATTRIBUTES --
 0 1024 sha384(5f91550edb03f0bb8917da57f0f8818976f5da971307b7ee4886bb951c4891a1f16f840dae8f655aa5df718884ebc15b)
 1 1024 sha384(47f05d367b0c32e438fb63e6cf4a5f35c2aa2f90dc7543f8a41a0f95ce8a40a313ab5cf36134a2068c4c969cb50db776)
 2 1024 sha384(d063457705d66d6f016e4cdd747db3af8d70ebfd36badd63de6c8ca4a9d8bfb5d874e7fbd750aa804dcaddae7eeef51e)
