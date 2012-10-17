@@ -1,39 +1,43 @@
 # IEBS Specification #
-Orignal https://docs.google.com/document/d/1Sj2y3bLzxvY8wrxKMiozvA26_DRxXepsVthzzIReRnI/edit
 
 ## Requirements ##
 * Encrypt Backup-ed Files
 * Produce Incremental backups without needing to decrypt existing backup-ed files
 * Prefer to not require decryption key to encrypt files (openssl? gnupg?)
-* Able to be easy uploaded into a non-traditional file system (Eg. RackSpace Cloud Files) (ie. don't rely on the existance of a traditional file system on the remote host)
+* Core Systems should be filesystem agnostic - we shouldn't care where we are backing up from or to.
+* * This will likly require platform specific read and restore modules (Unix attributes vs. Windows attributes)
+* * Each storage system will require its own module
+* Optionaly Encrypt the Manifest
 
-## Ideas ##
+## General ##
 
-### Filesystem Layout ###
-File blocks are stored in a tar file (possibly compressed? Optional? Job of the output engine?) - this will ensure that we have something akin to a traditional file system to utilize.
+### Backup Layout ###
+File blocks should be stored by file UID and their index number and the manifest should be stored adjacent to the top level of the block store.
 
 ### Full backups ###
-Force 1 full backup for no more than 50 increments ?
+Full backups should be identfied by the backup idenfitier and the date that the backup was made on followed by _full.
+Eg.
 ```
-system_yyyy-mm-dd_full.files.tar
-system_yyyy-mm-dd_full.manifest.bz2
+name_yyyy-mm-dd_full.files.tar
+name_yyyy-mm-dd_full.manifest.bz2
 ```
 
 ### Backups Increments ###
-The first date in this list referes to the full backup. The second data (with time) is used to uniquly identify this backup.
+Incremental backups are idenfitied by the backup identifier and the date of the fullbackup they are an increment of followed by _increment and the date AND time of this backup.
+Eg.
 ```
 system_yyyy-mm-dd_increment_yyyy-mm-dd-hh-mm.files.tar
 system_yyyy-mm-dd_increment_yyyy-mm-dd-hh-mm.manifest.bz2
 ```
 
 ### Backup Internal Format ###
-Internal format is the first 2 characters of the UUID as a directory containing the UUID of a file as as a folder, then the blocks are stored in folders with 10,000 blocks per folder.
+A suggested Internal format for storing the file blocks is the first 2 characters of the UUID as a directory containing the UUID of a file as as a folder, then the blocks are stored in folders with 10,000 blocks per folder.
 ```
 55/550e8400-e29b-41d4-a716-446655440000/00000/00000311
 a5/a5413a39-1531-ee54-2944-592522344224/00001/00001325
 e8/e877ce98-ce99-8a90-ece0-8e9ae0ce90a8/00003/00003214
 ```
-The internal format of both full and incremental backups is identical, it is the contents of the files and the manifests that differ
+The internal format of both full and incremental backups should be identical, it is the contents of the file blocks and the manifests that should differ
 
 ## Full backup Manifest Layout ##
 
@@ -62,7 +66,7 @@ Following the file information is the attribute lines, this is a key-value list 
 
 The next lines record the information on the indervidual blocks for that file: Block index, starting at 0; Block size, because not all blocks are going to be the full size of the block (ie the last one); sha384 hash in the format hashtype(hexdigest).
  
-The file block is be concluded with '-- END OF FILE --' and then the sha1 and md5 sum of all the manifest information for the file (excluding -- END OF FILE –)
+The file block is be concluded with ```-- END OF FILE --``` and then the sha1 and md5 sum of all the manifest information for the file (excluding ```-- END OF FILE –-```)
 ```
 550e8400-e29b-41d4-a716-446655440000 9842 1024 Documents/rfc/iebs.odt
 owner: narthollis
@@ -82,7 +86,7 @@ mask: 0755
 ```
 
 ### Close Line ###
-The manifest should be closed with the -- END OF MANIFEST -- followed by the sha1 and md5 hash of all the above text (excluding -- END OF MANIFEST --)
+The manifest should be closed with the ```-- END OF MANIFEST --``` followed by the sha1 and md5 hash of all the above text (excluding ```-- END OF MANIFEST --```)
 
 ```
 -- END OF MANIFEST -- sha1(7fe84f2db6df95dde3bfbd1e17b14efd8173941c) md5(54e0a7b53091f245e4bb4cdece63c035)
